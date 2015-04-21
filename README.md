@@ -6,7 +6,7 @@
 pip install requests[security]
 ```
 
-###Run:
+###run:
 
 ```
 python get.py
