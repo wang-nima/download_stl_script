@@ -2,6 +2,8 @@
 import requests
 import json
 import webbrowser
+import threading
+import time
 from flask import Flask, abort, request
 
 CLIENT_ID = "59aedb83c379fbc8652f"
@@ -18,16 +20,22 @@ def download_file(url, file_name):
                 f.write(chunk)
                 f.flush()
 
+class server_thread(threading.Thread):
+    def run(self):
+        app.run()
 
-def pop_up_broswer():
+def get_new_token():
+    server_thd = server_thread()
+    server_thd.start()
     args = {'client_id': CLIENT_ID, 'redirect_uri': REDIRECT_URI}
     r = requests.get("https://www.thingiverse.com/login/oauth/authorize", params=args)
-    print r.url
+    webbrowser.open_new(r.url)
 
 app = Flask(__name__)
 @app.route('/')
 def callback():
     code = request.args.get('code')
+    print code
     access_token = get_token(code)
 
 def get_token(code):
@@ -43,14 +51,12 @@ def get_token(code):
     token_json = response.json()
     return token_json["access_token"]
 
-def query():
+def main():
 
     # read access token from file
     file_object = open("key.txt", 'r')
-    try:
-        token = file_object.read(32)
-    finally:
-        file_object.close()
+    token = file_object.read(32)
+    file_object.close()
 
     args = {'access_token': token}
 
@@ -59,13 +65,13 @@ def query():
 
     r = requests.get("https://api.thingiverse.com/search/" + item, params=args)
 
-    if r.status_code == 401:
-        print "token expire"
-        pop_up_broswer()
-        return
-    elif r.status_code == 404:
-        print "item not found"
-        return
+    while r.status_code != 200:
+        if r.status_code == 401:
+            print "token expire"
+            token = get_new_token()
+        elif r.status_code == 404:
+            print "item not found, try again"
+        r = requests.get("https://api.thingiverse.com/search/" + item, params=args)
 
     things_json = r.json()
     idx = 0
@@ -106,4 +112,4 @@ def query():
     return
 
 if __name__ == "__main__":
-    app.run(debug=True, port=54321)
+    main()
