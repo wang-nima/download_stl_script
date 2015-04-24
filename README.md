@@ -22,5 +22,5 @@ the new access token will be saved in key.txt
 
 Python version 2.7.9
 
- ![image](https://github.com/wang-nima/get/result.png)
- 
+![Alt text](https://github.com/wang-nima/get/blob/master/result.png "Result")
+
