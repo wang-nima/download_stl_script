@@ -20,37 +20,6 @@ def download_file(url, file_name):
                 f.write(chunk)
                 f.flush()
 
-class server_thread(threading.Thread):
-    def run(self):
-        app.run()
-
-def get_new_token():
-    server_thd = server_thread()
-    server_thd.start()
-    args = {'client_id': CLIENT_ID, 'redirect_uri': REDIRECT_URI}
-    r = requests.get("https://www.thingiverse.com/login/oauth/authorize", params=args)
-    webbrowser.open_new(r.url)
-
-app = Flask(__name__)
-@app.route('/')
-def callback():
-    code = request.args.get('code')
-    print code
-    access_token = get_token(code)
-
-def get_token(code):
-    client_auth = requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
-    post_data = {"grant_type": "authorization_code",
-                 "code": code,
-                 "redirect_uri": REDIRECT_URI}
-    headers = base_headers()
-    response = requests.post("https://ssl.reddit.com/api/v1/access_token",
-                             auth=client_auth,
-                             headers=headers,
-                             data=post_data)
-    token_json = response.json()
-    return token_json["access_token"]
-
 def main():
 
     # read access token from file
@@ -65,13 +34,11 @@ def main():
 
     r = requests.get("https://api.thingiverse.com/search/" + item, params=args)
 
-    while r.status_code != 200:
-        if r.status_code == 401:
-            print "token expire"
-            token = get_new_token()
-        elif r.status_code == 404:
-            print "item not found, try again"
-        r = requests.get("https://api.thingiverse.com/search/" + item, params=args)
+    if r.status_code == 401:
+        print "token expire"
+        token = get_new_token()
+    elif r.status_code == 404:
+        print "item not found"
 
     things_json = r.json()
     idx = 0
