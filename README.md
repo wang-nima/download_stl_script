@@ -1,4 +1,4 @@
-# get
+# download stl model from thingiverse
 
 ###install:
 
